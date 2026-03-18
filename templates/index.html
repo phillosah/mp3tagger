@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MP3 Tagger</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <span class="header-icon">&#9835;</span>
+    <h1>MP3 Tagger</h1>
+    <span class="header-sub">Fingerprint &amp; Tag</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- Upload Section -->
+  <section id="upload-section">
+    <div id="drop-zone">
+      <div class="drop-icon">&#8681;</div>
+      <p><strong>Drop an MP3 file here</strong></p>
+      <p class="muted">or click to browse</p>
+      <input type="file" id="file-input" accept=".mp3" hidden>
+    </div>
+  </section>
+
+  <!-- Information Section -->
+  <section id="info-section" class="hidden">
+    <h2>Information</h2>
+    <div class="info-grid">
+      <div class="cover-art-box" id="info-cover-box">
+        <img id="info-cover-img" src="" alt="Cover Art" class="hidden">
+        <div id="info-no-cover" class="no-art-label">No Cover Art</div>
+      </div>
+      <div class="info-fields">
+        <div class="info-field full">
+          <label>Filename</label>
+          <span id="info-filename">—</span>
+        </div>
+        <div class="info-field">
+          <label>Title</label>
+          <span id="info-title" class="empty">—</span>
+        </div>
+        <div class="info-field">
+          <label>Artist</label>
+          <span id="info-artist" class="empty">—</span>
+        </div>
+        <div class="info-field">
+          <label>Album</label>
+          <span id="info-album" class="empty">—</span>
+        </div>
+        <div class="info-field">
+          <label>Date</label>
+          <span id="info-date" class="empty">—</span>
+        </div>
+        <div class="info-field">
+          <label>Codec</label>
+          <span id="info-codec">—</span>
+        </div>
+        <div class="info-field">
+          <label>Bitrate</label>
+          <span id="info-bitrate">—</span>
+        </div>
+        <div class="info-field">
+          <label>Duration</label>
+          <span id="info-duration">—</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Fingerprint Section -->
+  <section id="fingerprint-section" class="hidden">
+    <h2>Fingerprint</h2>
+
+    <div id="fp-status" class="status-row">
+      <div id="fp-spinner" class="spinner"></div>
+      <span id="fp-status-text">Generating audio fingerprint…</span>
+    </div>
+
+    <div id="fp-results" class="hidden">
+      <div class="fp-match-header">
+        <span id="fp-score" class="score-badge"></span>
+        <span id="fp-recording-id" class="muted small"></span>
+      </div>
+
+      <div class="edit-layout">
+        <!-- Found Cover Art -->
+        <div class="found-cover-col">
+          <div class="col-label">Found Cover Art</div>
+          <div class="cover-art-box large" id="found-cover-box">
+            <img id="found-cover-img" src="" alt="Found Cover" class="hidden">
+            <div id="no-cover-found" class="no-art-label">Searching…</div>
+          </div>
+          <div id="cover-status" class="muted small" style="margin-top:0.4rem;"></div>
+          <label class="checkbox-label" style="margin-top:0.5rem;">
+            <input type="checkbox" id="use-cover-checkbox" checked>
+            Embed this cover art
+          </label>
+        </div>
+
+        <!-- Edit Fields -->
+        <div class="edit-fields">
+          <div class="edit-field">
+            <label>Title</label>
+            <input type="text" id="edit-title" placeholder="Track title">
+          </div>
+          <div class="edit-field">
+            <label>Artist</label>
+            <input type="text" id="edit-artist" placeholder="Artist name">
+          </div>
+          <div class="edit-field">
+            <label>Album</label>
+            <input type="text" id="edit-album" placeholder="Album name">
+          </div>
+          <div class="edit-field">
+            <label>Date</label>
+            <input type="text" id="edit-date" placeholder="Year (e.g. 2023)">
+          </div>
+
+          <div class="button-row">
+            <button class="btn btn-primary" id="update-btn">&#10003; Update Tags</button>
+            <button class="btn btn-secondary" id="retry-fp-btn">&#8635; Re-fingerprint</button>
+            <button class="btn btn-secondary" id="retry-cover-btn">&#128247; Search Cover</button>
+            <a id="download-link" class="btn btn-secondary hidden" href="#">&#8681; Download</a>
+          </div>
+
+          <div id="update-result" class="hidden"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Log Section -->
+  <section id="log-section">
+    <h2>Log</h2>
+    <div id="log-output"></div>
+  </section>
+
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

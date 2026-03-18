@@ -1,0 +1,5 @@
+flask>=3.0.0
+mutagen>=1.47.0
+pyacoustid>=1.2.2
+requests>=2.31.0
+gunicorn>=21.0.0
