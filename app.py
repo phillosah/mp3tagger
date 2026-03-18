@@ -45,6 +45,28 @@ def get_acoustid_key():
     return ''
 
 
+@app.route('/debug')
+def debug():
+    import shutil, subprocess
+    info = {
+        'platform': platform.system(),
+        '_base': _base,
+        'FPCALC_var': os.environ.get('FPCALC', '(not set)'),
+        'fpcalc_path_exists': os.path.exists(FPCALC),
+        'fpcalc_which': shutil.which('fpcalc'),
+        'cwd': os.getcwd(),
+        'base_contents': os.listdir(_base),
+    }
+    try:
+        out = subprocess.check_output([FPCALC, '-version'], stderr=subprocess.STDOUT).decode()
+        info['fpcalc_version'] = out.strip()
+    except Exception as e:
+        info['fpcalc_version'] = f'ERROR: {e}'
+    from flask import Response
+    import json
+    return Response(json.dumps(info, indent=2), content_type='application/json')
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
