@@ -2,7 +2,7 @@ services:
   - type: web
     name: mp3tagger
     runtime: python
-    buildCommand: "pip install -r requirements.txt && curl -fsSL https://github.com/acoustid/chromaprint/releases/download/v1.6.0/chromaprint-fpcalc-1.6.0-linux-x86_64.tar.gz | tar -xz --strip-components=1 chromaprint-fpcalc-1.6.0-linux-x86_64/fpcalc && chmod +x fpcalc"
+    buildCommand: "bash build.sh"
     startCommand: "gunicorn app:app"
     envVars:
       - key: ACOUSTID_API_KEY

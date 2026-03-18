@@ -58,6 +58,12 @@ header h1 {
   font-size: 0.8rem;
   margin-left: 0.25rem;
 }
+.header-version {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-family: var(--mono);
+}
 
 /* ── Main layout ─────────────────────────────────── */
 main {
