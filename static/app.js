@@ -100,6 +100,7 @@ async function uploadFile(file) {
 
   const fd = new FormData();
   fd.append('file', file);
+  if (state.file_id) fd.append('old_file_id', state.file_id);
 
   try {
     const res  = await fetch('/upload', { method: 'POST', body: fd });

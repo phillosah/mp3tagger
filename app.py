@@ -84,6 +84,15 @@ def upload():
     if not file.filename.lower().endswith('.mp3'):
         return jsonify({'error': 'Only MP3 files are supported', 'logs': ['Error: Only MP3 files are supported']})
 
+    # Delete previous file for this session if provided
+    old_id = request.form.get('old_file_id', '')
+    if old_id and old_id in file_store:
+        try:
+            os.remove(file_store[old_id])
+        except OSError:
+            pass
+        del file_store[old_id]
+
     filename = secure_filename(file.filename)
     # Prefix with a uuid so two users uploading the same filename don't collide
     file_id = str(uuid.uuid4())
