@@ -161,6 +161,38 @@ EXAMPLE OUTPUT (console)
   ════════════════════════════════════════════════════════════════════════
 
 
+ILLEGAL CHARACTERS IN FILENAMES
+--------------------------------
+Windows does not allow these characters in file or folder names:
+  / \ : * ? " < > |
+
+If a title or artist contains any of these, the script handles them
+automatically during rename:
+
+  Replacement rules:
+    /  \  :   →  replaced with  -
+    *  ?  "   →  removed entirely
+    <  >  |   →  removed entirely
+
+  Leading/trailing spaces, dots, and dashes are also stripped.
+
+  Examples:
+    "AC/DC"           →  "AC-DC"
+    "What?"           →  "What"
+    "Artist: Name"    →  "Artist- Name"
+    "Title <Remix>"   →  "Title -Remix"
+
+  Full rename examples:
+    title="AC/DC",  artist="Back in Black?"
+    → "AC-DC - Back in Black.mp3"
+
+    title="What?: The Remix",  artist="Artist/Name"
+    → "What-- The Remix - Artist-Name.mp3"
+
+The tags written into the MP3 file always keep the original unmodified
+values — only the filename is sanitised.
+
+
 TROUBLESHOOTING
 ---------------
 "fpcalc not found"
