@@ -76,9 +76,18 @@ def sanitise(name: str) -> str:
     return name.strip(' .')
 
 
+def fix_case(s: str) -> str:
+    """Apply title case only when the string is entirely lowercase.
+
+    Leaves already-mixed-case strings like 'SawanoHiroyuki[nZk]' untouched
+    while fixing MusicBrainz values like 'twilight zone' → 'Twilight Zone'.
+    """
+    return s.title() if s == s.lower() else s
+
+
 def safe_rename(title: str, artist: str) -> str:
-    """Build a safe 'title - artist.mp3' filename."""
-    return f"{sanitise(title)} - {sanitise(artist)}.mp3"
+    """Build a safe 'title - artist.mp3' filename with proper capitalisation."""
+    return f"{sanitise(fix_case(title))} - {sanitise(fix_case(artist))}.mp3"
 
 
 def load_config(path: str) -> dict:
