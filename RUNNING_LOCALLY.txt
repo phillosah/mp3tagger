@@ -1,0 +1,65 @@
+MP3 TAGGER v1.1 — RUNNING LOCALLY
+===================================
+
+
+STARTING THE APP
+----------------
+
+Option A: Double-click start.bat
+  Simply double-click start.bat in the mp3tagger folder.
+  A Command Prompt window will open, the app will start, and your
+  browser will open automatically to http://localhost:5000
+
+Option B: Command Prompt
+  1. Open Command Prompt
+  2. Navigate to the mp3tagger folder:
+       cd C:\Users\Philip\Documents\Claude\mp3tagger
+  3. Run:
+       python app.py
+  4. Open your browser and go to:
+       http://localhost:5000
+
+  You should see this message in the Command Prompt:
+       MP3 Tagger running at http://localhost:5000
+
+
+STOPPING THE APP
+----------------
+
+Option A: Close the Command Prompt window that is running the app.
+
+Option B: Click inside the Command Prompt window and press Ctrl + C.
+  The app will stop and the window stays open.
+
+The app only runs while the Command Prompt window is open.
+Closing your browser does NOT stop the app.
+
+
+RESTARTING THE APP
+------------------
+
+If you made changes to the code, the app needs to be restarted to pick
+them up (the local server does NOT auto-reload in production mode).
+
+1. Stop the app (see above)
+2. Start it again (see above)
+
+
+NOTES
+-----
+
+- The app runs on port 5000 by default. If something else is already
+  using port 5000, you will see an error like "Address already in use".
+  To fix it, either stop the other app or edit the last line of app.py
+  and change port=5000 to another number (e.g. port=5001), then open
+  http://localhost:5001 in your browser.
+
+- Uploaded files are stored in the mp3tagger\uploads folder while the
+  app is running. Each new upload in the same browser session replaces
+  the previous file automatically.
+
+- The app must be running for the browser page to work. If you see
+  "This site can't be reached", the app is not running — start it first.
+
+- The AcoustID API key is stored in config.json. Do not share this file
+  publicly (it is excluded from the GitHub repository via .gitignore).

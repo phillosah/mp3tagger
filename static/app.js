@@ -1,29 +1,45 @@
+// =============================================================================
+// MP3 Tagger v1.1 — Frontend
+//
+// Flow:
+//   1. User drops or selects an MP3
+//   2. uploadFile()      → POST /upload       → displays Information section
+//   3. doFingerprint()   → POST /fingerprint  → displays Fingerprint section
+//   4. doSearchCover()   → POST /search_cover → displays found cover art
+//   5. updateTags()      → POST /update_tags  → writes tags back to the file
+//   6. Download link     → GET  /download/<id>
+//
+// All server responses include a "logs" array that gets appended to the
+// Log section at the bottom of the page.
+// =============================================================================
+
 'use strict';
 
+// Session state — reset on each new upload
 const state = {
-  file_id: null,
-  coverUrl: null,
-  filename: null,
+  file_id:  null,   // UUID assigned by server on upload
+  coverUrl: null,   // iTunes cover art URL found during search
+  filename: null,   // Original filename shown in the UI
 };
 
-// ── Logging ──────────────────────────────────────────────────────────────────
+// ── Logging ───────────────────────────────────────────────────────────────────
 
+// Append a single timestamped line to the Log section
 function log(message, type = 'default') {
-  const out = document.getElementById('log-output');
+  const out   = document.getElementById('log-output');
   const entry = document.createElement('div');
   entry.className = 'log-entry' + (type !== 'default' ? ` log-${type}` : '');
 
-  const now = new Date();
-  const ts = now.toTimeString().slice(0, 8);
-
+  const ts = new Date().toTimeString().slice(0, 8);
   entry.innerHTML =
     `<span class="ts">[${ts}]</span>` +
     `<span class="msg">${escHtml(message)}</span>`;
 
   out.appendChild(entry);
-  out.scrollTop = out.scrollHeight;
+  out.scrollTop = out.scrollHeight;  // auto-scroll to latest entry
 }
 
+// Classify and log each message returned in a server response's "logs" array
 function logMany(messages) {
   if (!messages) return;
   messages.forEach(msg => {
@@ -43,6 +59,7 @@ function logMany(messages) {
   });
 }
 
+// Safely escape text before inserting into innerHTML
 function escHtml(text) {
   const d = document.createElement('div');
   d.appendChild(document.createTextNode(String(text)));
@@ -55,19 +72,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const dropZone  = document.getElementById('drop-zone');
   const fileInput = document.getElementById('file-input');
 
+  // Click anywhere on the drop zone to open the file picker
   dropZone.addEventListener('click', () => fileInput.click());
 
+  // File picker selection
   fileInput.addEventListener('change', e => {
     const file = e.target.files[0];
     if (file) uploadFile(file);
-    fileInput.value = '';
+    fileInput.value = '';  // reset so the same file can be re-selected
   });
 
+  // Drag-and-drop highlight
   dropZone.addEventListener('dragover', e => {
     e.preventDefault();
     dropZone.classList.add('drag-over');
   });
   dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+
+  // Drop — validate it's an MP3 before proceeding
   dropZone.addEventListener('drop', e => {
     e.preventDefault();
     dropZone.classList.remove('drag-over');
@@ -79,6 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Button event listeners
   document.getElementById('update-btn').addEventListener('click', updateTags);
   document.getElementById('retry-fp-btn').addEventListener('click', doFingerprint);
   document.getElementById('retry-cover-btn').addEventListener('click', () => {
@@ -93,6 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function uploadFile(file) {
   log(`Uploading: ${file.name}`, 'info');
 
+  // Hide result sections from any previous session
   setHidden('info-section', true);
   setHidden('fingerprint-section', true);
   setHidden('update-result', true);
@@ -100,6 +124,7 @@ async function uploadFile(file) {
 
   const fd = new FormData();
   fd.append('file', file);
+  // Tell the server which file to delete (the previous upload in this session)
   if (state.file_id) fd.append('old_file_id', state.file_id);
 
   try {
@@ -109,9 +134,12 @@ async function uploadFile(file) {
 
     if (data.error) { log('Upload failed: ' + data.error, 'error'); return; }
 
+    // Store the session token returned by the server
     state.file_id  = data.file_id;
     state.filename = data.info.filename;
     displayInfo(data.info);
+
+    // Auto-start fingerprinting as soon as the upload completes
     await doFingerprint();
 
   } catch (err) {
@@ -119,8 +147,9 @@ async function uploadFile(file) {
   }
 }
 
-// ── Display Info ──────────────────────────────────────────────────────────────
+// ── Information section ───────────────────────────────────────────────────────
 
+// Populate the Information section with file properties and existing tags
 function displayInfo(info) {
   setHidden('info-section', false);
 
@@ -133,6 +162,7 @@ function displayInfo(info) {
   setText('info-bitrate',  info.bitrate  || '—');
   setText('info-duration', info.duration || '—');
 
+  // Show embedded cover art if present, otherwise show placeholder
   const img   = document.getElementById('info-cover-img');
   const noArt = document.getElementById('info-no-cover');
   if (info.cover_art) {
@@ -145,6 +175,7 @@ function displayInfo(info) {
   }
 }
 
+// Set text and apply "empty" style when there is no value
 function setTagText(id, value) {
   const el = document.getElementById(id);
   if (value) {
@@ -169,6 +200,7 @@ function setHidden(id, hidden) {
 async function doFingerprint() {
   if (!state.file_id) return;
 
+  // Show the fingerprint section with a loading spinner
   setHidden('fingerprint-section', false);
   setHidden('fp-status', false);
   setHidden('fp-results', true);
@@ -193,6 +225,7 @@ async function doFingerprint() {
     setHidden('fp-status', true);
 
     if (data.error) {
+      // Show the error message in place of the spinner
       setHidden('fp-status', false);
       spinner.style.display = 'none';
       statusTx.textContent  = '⚠ ' + data.error;
@@ -202,6 +235,7 @@ async function doFingerprint() {
 
     if (data.match) {
       showFpResults(data.match);
+      // Auto-search for cover art using the identified artist and title
       await doSearchCover(data.match.artist, data.match.title);
     } else {
       setHidden('fp-status', false);
@@ -216,6 +250,7 @@ async function doFingerprint() {
   }
 }
 
+// Populate the editable fields with the fingerprint match data
 function showFpResults(match) {
   setHidden('fp-results', false);
 
@@ -224,17 +259,19 @@ function showFpResults(match) {
   document.getElementById('fp-recording-id').textContent =
     match.recording_id ? `MusicBrainz: ${match.recording_id}` : '';
 
+  // Pre-fill edit fields — user can adjust before clicking Update
   document.getElementById('edit-title').value  = match.title  || '';
   document.getElementById('edit-artist').value = match.artist || '';
   document.getElementById('edit-album').value  = match.album  || '';
   document.getElementById('edit-date').value   = match.date   || '';
 }
 
-// ── Cover Art ─────────────────────────────────────────────────────────────────
+// ── Cover art ─────────────────────────────────────────────────────────────────
 
 async function doSearchCover(artist, title) {
   if (!artist && !title) return;
 
+  // Reset the cover art display while searching
   const covImg  = document.getElementById('found-cover-img');
   const noFound = document.getElementById('no-cover-found');
   const status  = document.getElementById('cover-status');
@@ -270,6 +307,7 @@ async function doSearchCover(artist, title) {
   }
 }
 
+// Load the cover image via the server proxy (avoids browser CORS block)
 function loadFoundCover(url) {
   const img     = document.getElementById('found-cover-img');
   const noFound = document.getElementById('no-cover-found');
@@ -287,7 +325,7 @@ function loadFoundCover(url) {
   img.src = `/proxy_image?url=${encodeURIComponent(url)}`;
 }
 
-// ── Update Tags ───────────────────────────────────────────────────────────────
+// ── Update tags ───────────────────────────────────────────────────────────────
 
 async function updateTags() {
   if (!state.file_id) return;
@@ -298,6 +336,7 @@ async function updateTags() {
   btn.disabled = true;
   setHidden('update-result', true);
 
+  // Collect values from the editable fields
   const tags = {
     title:  document.getElementById('edit-title').value.trim(),
     artist: document.getElementById('edit-artist').value.trim(),
@@ -305,6 +344,7 @@ async function updateTags() {
     date:   document.getElementById('edit-date').value.trim(),
   };
 
+  // Only send cover URL if the checkbox is checked
   const useCover = document.getElementById('use-cover-checkbox').checked;
   const coverUrl = useCover ? state.coverUrl : null;
 
@@ -326,8 +366,10 @@ async function updateTags() {
       resultEl.textContent = '✓ Tags updated successfully';
       setHidden('update-result', false);
 
+      // Refresh the Information section to reflect the new tags
       if (data.updated_info) displayInfo(data.updated_info);
 
+      // Show the download button so the user can save the tagged file
       const dl = document.getElementById('download-link');
       dl.href = `/download/${state.file_id}`;
       dl.classList.remove('hidden');
