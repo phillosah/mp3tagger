@@ -56,6 +56,7 @@ VERSION      = "1.0"
 # Default values written to batch_config.json on first run
 DEFAULT_CONFIG = {
     "scan_directory":    "",
+    "output_directory":  "",
     "acoustid_api_key":  "",
     "log_directory":     "logs",
     "recursive":         True,
@@ -291,25 +292,31 @@ def write_tags(filepath: str, match: dict, cover_bytes: bytes, mime: str) -> lis
     return logs
 
 
-def rename_file(filepath: str, title: str, artist: str) -> tuple:
-    """Rename the file to 'title - artist.mp3'. Returns (new_path, log_line)."""
+def rename_file(filepath: str, title: str, artist: str, output_dir: str = '') -> tuple:
+    """Rename (and optionally move) the file to 'title - artist.mp3'.
+
+    If output_dir is set the file is moved there; otherwise it is renamed
+    in its current directory. Returns (new_path, log_line).
+    """
     if not title or not artist:
         return filepath, "  Rename skipped (title or artist missing)"
 
-    new_name = safe_rename(title, artist)
-    new_path = os.path.join(os.path.dirname(filepath), new_name)
+    new_name   = safe_rename(title, artist)
+    target_dir = output_dir if output_dir else os.path.dirname(filepath)
+    new_path   = os.path.join(target_dir, new_name)
 
     # If target name already exists and is a different file, add a counter
-    counter = 1
+    counter  = 1
     base_new = new_path
     while os.path.exists(new_path) and os.path.abspath(new_path) != os.path.abspath(filepath):
-        stem = Path(base_new).stem
-        new_path = os.path.join(os.path.dirname(filepath), f"{stem} ({counter}).mp3")
+        stem     = Path(base_new).stem
+        new_path = os.path.join(target_dir, f"{stem} ({counter}).mp3")
         counter += 1
 
     try:
         os.rename(filepath, new_path)
-        return new_path, f"  Renamed: {os.path.basename(new_path)}"
+        action = "Moved" if output_dir else "Renamed"
+        return new_path, f"  {action}: {new_path if output_dir else os.path.basename(new_path)}"
     except Exception as e:
         return filepath, f"  Rename failed: {e}"
 
@@ -338,6 +345,13 @@ def main():
 
     find_fpcalc()
 
+    # Prepare output directory (optional — empty means rename in place)
+    output_dir = cfg.get('output_directory', '').strip()
+    if output_dir:
+        if not os.path.isabs(output_dir):
+            output_dir = os.path.join(SCRIPT_DIR, output_dir)
+        os.makedirs(output_dir, exist_ok=True)
+
     # Prepare log directory
     log_dir = cfg['log_directory']
     if not os.path.isabs(log_dir):
@@ -357,7 +371,8 @@ def main():
         sys.exit(0)
 
     print(f"\nBatch Tagger v{VERSION}  —  {run_dt.strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"Directory : {scan_dir}")
+    print(f"Scan dir  : {scan_dir}")
+    print(f"Output dir: {output_dir if output_dir else '(rename in place)'}")
     print(f"Files found: {total}")
     print(f"Log file  : {log_path}\n")
     print("=" * 72)
@@ -433,7 +448,7 @@ def main():
             note   = 'tag write error'
 
         # Rename file
-        new_path, rename_log = rename_file(filepath, match['title'], match['artist'])
+        new_path, rename_log = rename_file(filepath, match['title'], match['artist'], output_dir)
         print(rename_log)
         file_lines.append(rename_log)
 
@@ -469,7 +484,8 @@ def main():
         f"  BATCH TAGGING SUMMARY — {run_dt.strftime('%Y-%m-%d %H:%M:%S')}",
         sep,
         f"  Script version  : v{VERSION}",
-        f"  Directory       : {scan_dir}",
+        f"  Scan directory  : {scan_dir}",
+        f"  Output directory: {output_dir if output_dir else '(rename in place)'}",
         f"  Recursive       : {'Yes' if cfg['recursive'] else 'No'}",
         f"  Skip if tagged  : {'Yes' if cfg['skip_already_tagged'] else 'No'}",
         f"  Embed cover art : {'Yes' if cfg['embed_cover_art'] else 'No'}",

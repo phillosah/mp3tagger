@@ -48,7 +48,8 @@ CONFIGURATION — batch_config.json
 Open batch_config.json in any text editor and set the values:
 
   {
-    "scan_directory":     "C:\\Users\\Philip\\Music",
+    "scan_directory":    "C:\\Users\\Philip\\Music",
+    "output_directory":  "C:\\Users\\Philip\\Music\\Tagged",
     "acoustid_api_key":  "your_key_here",
     "log_directory":     "logs",
     "recursive":         true,
@@ -59,6 +60,16 @@ Open batch_config.json in any text editor and set the values:
 scan_directory
   The folder to scan for MP3 files.
   Use double backslashes on Windows: "C:\\Users\\Philip\\Music"
+
+output_directory
+  Where to move the renamed MP3 files after tagging.
+  Leave blank ("") to rename files in place (same folder they came from).
+  The folder is created automatically if it does not exist.
+  Relative paths are resolved from the script folder.
+
+  Example — scan Downloads, move tagged files to Music\Tagged:
+    "scan_directory":   "C:\\Users\\Philip\\Downloads",
+    "output_directory": "C:\\Users\\Philip\\Music\\Tagged"
 
 acoustid_api_key
   Your AcoustID API key. Leave blank ("") to use the key from config.json
@@ -98,9 +109,11 @@ the script against each one separately.
 WHAT HAPPENS TO YOUR FILES
 ---------------------------
 - Tags are written directly to the original MP3 files.
-- Each file is renamed to "Title - Artist.mp3" in the same folder.
-  If a file with that name already exists, a counter is appended:
-  "Title - Artist (1).mp3", "Title - Artist (2).mp3", etc.
+- Each file is renamed to "Title - Artist.mp3".
+  If output_directory is set, the file is moved there after tagging.
+  If output_directory is blank, the file is renamed in its current folder.
+  If a file with that name already exists in the destination, a counter
+  is appended: "Title - Artist (1).mp3", "Title - Artist (2).mp3", etc.
 - If a track cannot be identified (no fingerprint match), the file
   is left unchanged and logged as FAILED.
 - If title or artist is missing from the match, renaming is skipped.
