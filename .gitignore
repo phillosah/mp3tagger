@@ -1,6 +1,8 @@
 uploads/
+logs/
 __pycache__/
 *.pyc
 fpcalc.exe
 config.json
+batch_config.json
 *.zip
