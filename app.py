@@ -440,6 +440,21 @@ def update_tags():
         tags.save(filepath)
         logs.append('Tags saved successfully!')
 
+        # Rename the file to "title - artist.mp3" using the newly saved tags
+        title  = (tags_data.get('title')  or '').strip()
+        artist = (tags_data.get('artist') or '').strip()
+        if title and artist:
+            # Sanitise: remove characters that are illegal in filenames
+            safe = lambda s: s.replace('/', '-').replace('\\', '-').replace(':', '-') \
+                              .replace('*', '').replace('?', '').replace('"', '') \
+                              .replace('<', '').replace('>', '').replace('|', '')
+            new_name = f"{safe(title)} - {safe(artist)}.mp3"
+            new_path = os.path.join(os.path.dirname(filepath), file_id + '_' + new_name)
+            os.rename(filepath, new_path)
+            file_store[file_id] = new_path
+            filepath = new_path
+            logs.append(f'File renamed to: {new_name}')
+
         # Re-read the file to return fresh tag data for the UI
         updated_info = _read_file_info(filepath)
         return jsonify({'success': True, 'logs': logs, 'updated_info': updated_info})
