@@ -447,7 +447,8 @@ def update_tags():
             # Sanitise: remove characters that are illegal in filenames
             safe = lambda s: s.replace('/', '-').replace('\\', '-').replace(':', '-') \
                               .replace('*', '').replace('?', '').replace('"', '') \
-                              .replace('<', '').replace('>', '').replace('|', '')
+                              .replace('<', '').replace('>', '').replace('|', '') \
+                              .strip(' .-')
             new_name = f"{safe(title)} - {safe(artist)}.mp3"
             new_path = os.path.join(os.path.dirname(filepath), file_id + '_' + new_name)
             os.rename(filepath, new_path)

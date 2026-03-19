@@ -73,7 +73,7 @@ def sanitise(name: str) -> str:
     """Remove or replace characters that are illegal in file/folder names."""
     for ch in _ILLEGAL:
         name = name.replace(ch, '-')
-    return name.strip(' .')
+    return name.strip(' .-')
 
 
 def fix_case(s: str) -> str:
